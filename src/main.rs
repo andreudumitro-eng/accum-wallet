@@ -2,6 +2,7 @@
 
 mod wallet;
 mod transaction;
+mod gui;
 
 use clap::{Parser, Subcommand};
 use colored::*;
@@ -50,6 +51,8 @@ enum Commands {
     BondStatus,
     /// Delegate bond to a miner
     BondDelegate { miner_id: String, amount: u64 },
+    /// Start GUI wallet server
+    Gui { #[arg(long, default_value_t = 8556)] port: u16 },
 }
 
 fn rpc_url(cli_rpc: &Option<String>) -> String {
@@ -468,6 +471,11 @@ fn main() {
     let base = rpc_url(&cli.rpc);
 
     let result = match cli.command {
+        Commands::Gui { port } => {
+            println!("🌐 Starting GUI wallet on http://127.0.0.1:{}", port);
+            gui::start(port);
+            loop { std::thread::sleep(std::time::Duration::from_secs(3600)); }
+        },
         Commands::Create => cmd_create(),
         Commands::Recover { phrase } => cmd_recover(&phrase),
         Commands::Balance => cmd_balance(&base),
@@ -488,6 +496,7 @@ fn main() {
         std::process::exit(1);
     }
 }
+
 
 
 

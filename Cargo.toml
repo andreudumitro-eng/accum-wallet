@@ -33,3 +33,11 @@ rand = "0.8"
 colored = "2"
 dirs = "5"
 thiserror = "1"
+
+# GUI / Web Server
+warp = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process"] }
+parking_lot = "0.12"
+axum = "0.7"
+urlencoding = "2"
+

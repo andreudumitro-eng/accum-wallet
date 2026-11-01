@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ACCUM Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070d17; --panel:#0e1725; --panel2:#0a1220; --line:#243247;
+  --muted:#9aa9bd; --text:#edf4ff;
+  --blue:#168cff; --green:#20dc72; --yellow:#f5bd26; --red:#ff4d5c;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 70% 0%,#101e32 0,transparent 42%),var(--bg);
+  color:var(--text); font:14px/1.45 Inter,system-ui,sans-serif; padding:20px;
+  overflow:hidden;
+}
+
+/* === 9. Background drift === */
+body::before{
+  content:""; position:fixed; inset:-10%; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(circle at 20% 30%, #168cff14, transparent 40%),
+    radial-gradient(circle at 80% 70%, #20dc7214, transparent 40%);
+  animation: bgDrift 14s ease-in-out infinite alternate;
+}
+@keyframes bgDrift{
+  from{transform:translate(-2%,-2%) scale(1.05)}
+  to{transform:translate(2%,2%) scale(1.12)}
+}
+
+/* === 1. Card entrance === */
+.card{
+  position:relative; z-index:1;
+  width:100%; max-width:460px;
+  background:linear-gradient(145deg,rgba(17,27,42,.96),rgba(10,18,31,.97));
+  border:1px solid var(--line); border-radius:20px; padding:28px;
+  box-shadow:0 20px 60px #00000055;
+  animation: cardIn .6s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes cardIn{
+  from{opacity:0; transform:translateY(20px) scale(.98)}
+  to{opacity:1; transform:none}
+}
+
+/* === 2. Animated gradient border === */
+.card::before{
+  content:""; position:absolute; inset:-2px; border-radius:22px; padding:2px;
+  background:linear-gradient(135deg,#168cff66,#20dc7266,transparent 60%);
+  background-size:200% 200%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  pointer-events:none;
+  animation: borderShift 6s linear infinite;
+}
+@keyframes borderShift{
+  0%{background-position:0% 50%}
+  100%{background-position:200% 50%}
+}
+
+h1{margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:.3px}
+.sub{color:var(--muted); font-size:12px; margin-bottom:22px}
+
+.status-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px}
+
+/* === 3. Status pulse === */
+.status-dot{
+  display:inline-block; width:9px; height:9px; border-radius:50%;
+  background:var(--red); margin-right:8px;
+  transition: background .4s, box-shadow .4s;
+}
+.status-dot.online{
+  background:var(--green);
+  animation: statusPulse 1.8s infinite;
+}
+@keyframes statusPulse{
+  0%{box-shadow:0 0 0 0 #20dc7266}
+  70%{box-shadow:0 0 0 10px #20dc7200}
+  100%{box-shadow:0 0 0 0 #20dc7200}
+}
+
+.balance-wrap{text-align:center; margin:18px 0 24px}
+.balance-label{font-size:11px; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase; margin-bottom:8px}
+
+/* === 7. Balance skeleton === */
+.balance{
+  font-size:46px; font-weight:800; line-height:1; letter-spacing:-1.5px;
+  background:linear-gradient(135deg,#edf4ff,#9cc9ff);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  transition:transform .25s;
+  display:inline-block; min-width:80px;
+}
+.balance.loading{
+  color:transparent;
+  background:linear-gradient(90deg,#1a2638 0%,#243247 50%,#1a2638 100%);
+  background-size:200% 100%;
+  -webkit-background-clip:text; background-clip:text;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* === 13. Balance bump === */
+.balance.bump{transform:scale(1.06)}
+
+.balance-unit{font-size:15px; color:var(--muted); font-weight:600; margin-left:6px}
+
+.addr-box{background:#0a1220; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:20px}
+.addr-label{font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px}
+
+/* === 5. Address flash === */
+.addr{
+  font:12px 'JetBrains Mono',monospace; color:#cfe1f7;
+  word-break:break-all; cursor:pointer; transition:color .2s;
+}
+.addr:hover{color:var(--green)}
+.addr.copied{animation: addrFlash .6s}
+@keyframes addrFlash{
+  0%,100%{color:#cfe1f7}
+  50%{color:var(--green); text-shadow:0 0 12px #20dc7288}
+}
+
+.form-group h3{margin:0 0 12px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--muted)}
+
+/* === 6. Floating labels === */
+.field{position:relative; margin-bottom:10px}
+.field input{
+  width:100%; padding:18px 14px 8px; background:#0a1220;
+  border:1px solid var(--line); border-radius:11px; color:var(--text);
+  font:14px Inter,sans-serif; outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+.field input:focus{border-color:var(--blue); box-shadow:0 0 0 4px #168cff1a}
+.field label{
+  position:absolute; left:14px; top:15px; color:var(--muted);
+  font-size:14px; pointer-events:none;
+  transition:top .2s, font-size .2s, color .2s, letter-spacing .2s;
+}
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label{
+  top:6px; font-size:10px; color:var(--blue); letter-spacing:.5px;
+}
+
+/* === 4. Button with spinner === */
+button.send{
+  width:100%; padding:14px; position:relative;
+  background:linear-gradient(135deg,#0d5933,#126b3d);
+  border:1px solid #126b3d; border-radius:11px; color:#eafff3;
+  font-weight:700; font-size:14px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:transform .15s, filter .2s;
+}
+button.send:hover:not(:disabled){transform:translateY(-1px); filter:brightness(1.1)}
+button.send:active:not(:disabled){transform:scale(.98)}
+button.send:disabled{opacity:.6; cursor:not-allowed}
+button.send .spinner{
+  display:none; width:16px; height:16px; border-radius:50%;
+  border:2px solid #ffffff55; border-top-color:#fff;
+  animation: spin .8s linear infinite;
+}
+button.send.loading .spinner{display:inline-block}
+button.send.loading .label{opacity:.6}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.hint{font-size:11px; color:var(--muted); margin-top:10px; line-height:1.5}
+.hint code{background:#0a1220; border:1px solid var(--line); padding:1px 5px; border-radius:4px; font-size:10.5px}
+
+/* === 8. Toasts === */
+#toasts{position:fixed; bottom:26px; right:26px; display:flex; flex-direction:column; gap:10px; z-index:999}
+.toast{
+  background:#0e1725; border:1px solid var(--line); border-left:4px solid var(--blue);
+  padding:14px 18px; border-radius:12px; box-shadow:0 12px 30px #00000066;
+  min-width:250px; transform:translateX(120%);
+  transition:transform .45s cubic-bezier(.175,.885,.32,1.275), opacity .3s, margin-top .35s;
+}
+.toast.show{transform:translateX(0)}
+.toast.leaving{transform:translateX(120%); opacity:0; margin-top:-60px}
+.toast.success{border-left-color:var(--green)}
+.toast.error{border-left-color:var(--red)}
+.toast-title{font-weight:700; margin-bottom:3px; font-size:13px}
+.toast-msg{color:var(--muted); font-size:12px}
+
+.sound-toggle{
+  position:absolute; top:14px; right:14px; z-index:2;
+  background:#0a1220; border:1px solid var(--line); border-radius:8px;
+  padding:6px 10px; color:var(--muted); font-size:11px; cursor:pointer;
+  transition:color .2s, border-color .2s;
+}
+.sound-toggle:hover{color:var(--text); border-color:#4b78ad}
+</style>
+</head>
+<body>
+<div class="card">
+  <button class="sound-toggle" id="soundToggle" title="Sound">Sound: On</button>
+
+  <h1>ACCUM Wallet</h1>
+  <div class="sub">Manage your assets · view only</div>
+
+  <div class="status-row">
+    <span style="color:var(--muted); font-size:12px">Network status</span>
+    <strong style="display:flex; align-items:center; font-size:12px">
+      <span class="status-dot" id="statusDot"></span><span id="statusText">Offline</span>
+    </strong>
+  </div>
+
+  <div class="balance-wrap">
+    <div class="balance-label">Balance</div>
+    <div><span class="balance loading" id="balance">0.00</span><span class="balance-unit">ACM</span></div>
+  </div>
+
+  <div class="addr-box">
+    <div class="addr-label">Your address</div>
+    <div class="addr" id="address" title="Click to copy">Loading...</div>
+  </div>
+
+  <div class="form-group">
+    <h3>Send coins</h3>
+    <div class="field">
+      <input type="text" id="sendAddr" placeholder=" " autocomplete="off">
+      <label for="sendAddr">Recipient address</label>
+    </div>
+    <div class="field">
+      <input type="number" id="sendAmount" placeholder=" " step="0.0001">
+      <label for="sendAmount">Amount (ACM)</label>
+    </div>
+    <button class="send" id="sendBtn">
+      <span class="label">Send</span>
+      <span class="spinner"></span>
+    </button>
+    <div class="hint">Sending is done via <code>accum-wallet send ...</code> in the terminal — your private key never leaves your computer.</div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  let lastBalance = null;
+  let soundOn = localStorage.getItem('accum_sound') !== 'off';
+
+  let audioCtx = null;
+  function beep(freqs, type='sine', dur=0.22, vol=0.08){
+    if (!soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = type;
+      freqs.forEach((f,i)=>o.frequency.setValueAtTime(f, audioCtx.currentTime + i*0.1));
+      g.gain.setValueAtTime(vol, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch(e){}
+  }
+  const soundSuccess = () => beep([880,1046.5],'sine');
+  const soundError   = () => beep([300],'triangle');
+  const soundCopy    = () => beep([1200],'square',0.08,0.04);
+
+  function toast(title, msg, type='success'){
+    const el = document.createElement('div');
+    el.className = 'toast '+type;
+    el.innerHTML = `<div class="toast-title">${title}</div><div class="toast-msg">${msg}</div>`;
+    $('toasts').appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    (type==='error'?soundError:soundSuccess)();
+    setTimeout(()=>{
+      el.classList.add('leaving');
+      setTimeout(()=>el.remove(), 400);
+    }, 4000);
+  }
+
+  function animateBalance(target){
+    const el = $('balance');
+    el.classList.remove('loading');
+    const from = lastBalance === null ? 0 : lastBalance;
+    const to = target;
+    lastBalance = to;
+    const start = performance.now(), dur = 700;
+    el.classList.add('bump');
+    setTimeout(()=>el.classList.remove('bump'), 300);
+    function step(t){
+      const p = Math.min(1,(t-start)/dur);
+      const eased = 1 - Math.pow(1-p, 3);
+      const val = from + (to-from)*eased;
+      el.textContent = val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+      if (p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  async function refresh(){
+    const info = await fetch('/api/info',{cache:'no-store'})
+      .then(r=>r.ok?r.json():null).catch(()=>null);
+    const online = !!info;
+    $('statusDot').classList.toggle('online', online);
+    $('statusText').textContent = online
+      ? `Online · peers ${info.peers ?? 0} · h ${info.height ?? '—'}`
+      : 'Offline';
+    $('statusText').style.color = online ? 'var(--green)' : 'var(--red)';
+
+    let addr = localStorage.getItem('accum_addr');
+    if (!addr){
+      $('address').textContent = 'Click here to enter your public address';
+      return;
+    }
+    $('address').textContent = addr;
+
+    const bal = await fetch('/api/balance/'+encodeURIComponent(addr),{cache:'no-store'})
+      .then(r=>r.ok?r.json():null).catch(()=>null);
+    if (bal && typeof bal.balance === 'number'){
+      animateBalance(bal.balance / 10_000_000);
+    } else {
+      $('balance').classList.add('loading');
+      $('balance').textContent = '0.00';
+    }
+  }
+
+  $('address').addEventListener('click', async ()=>{
+    const t = $('address').textContent;
+    const isHint = !t || t.startsWith('Click') || t.startsWith('Loading');
+    if (isHint){
+      const addr = prompt('Enter your PUBLIC ACCUM address (not a private key, not a seed phrase):');
+      if (addr && addr.trim()){
+        localStorage.setItem('accum_addr', addr.trim());
+        refresh();
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(t);
+      $('address').classList.add('copied');
+      setTimeout(()=>$('address').classList.remove('copied'), 600);
+      soundCopy();
+      toast('Copied','Address copied to clipboard','success');
+    } catch(e){
+      toast('Error','Failed to copy','error');
+    }
+  });
+
+  $('sendBtn').addEventListener('click', async ()=>{
+    const addr = $('sendAddr').value.trim();
+    const amount = $('sendAmount').value.trim();
+    if (!addr || !amount){
+      return toast('Error','Fill in address and amount','error');
+    }
+    const lyt = Math.round(parseFloat(amount) * 10_000_000);
+    if (!Number.isFinite(lyt) || lyt <= 0){
+      return toast('Error','Invalid amount','error');
+    }
+    const btn = $('sendBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    try {
+      const cmd = `accum-wallet send ${addr} ${lyt}`;
+      await navigator.clipboard.writeText(cmd);
+      soundCopy();
+      toast('Command copied', 'Paste it into the terminal and press Enter', 'success');
+      $('sendAddr').value = '';
+      $('sendAmount').value = '';
+    } catch(e){
+      toast('Command', `accum-wallet send ${addr} ${lyt}`, 'success');
+    } finally {
+      setTimeout(()=>{
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }, 600);
+    }
+  });
+
+  $('soundToggle').addEventListener('click', ()=>{
+    soundOn = !soundOn;
+    localStorage.setItem('accum_sound', soundOn ? 'on' : 'off');
+    $('soundToggle').textContent = soundOn ? 'Sound: On' : 'Sound: Off';
+    if (soundOn) soundCopy();
+  });
+  $('soundToggle').textContent = soundOn ? 'Sound: On' : 'Sound: Off';
+
+  refresh();
+  setInterval(refresh, 5000);
+})();
+</script>
+</body>
+</html>
